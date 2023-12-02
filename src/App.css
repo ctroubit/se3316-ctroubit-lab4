@@ -1,8 +1,9 @@
 .App {
   text-align: center;
 }
-.custom-select-width{
-  width: 50%;
+
+.blur-effect {
+  filter: blur(5px);
 }
-  
+
 

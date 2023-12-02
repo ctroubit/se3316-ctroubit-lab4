@@ -10,3 +10,6 @@
 #searchButton{
     margin-right:16vw;
 }
+.blurred {
+    filter: blur(5px);
+  }

@@ -1,0 +1,19 @@
+#login-box{
+    background-color:blue;
+    margin-top: 15vh;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    margin-left: auto;
+    margin-right: auto;
+    width: 400px;
+    text-align: center;
+    height: 500px;
+    color: white;
+}
+.close-button{
+    margin-top: 10px;
+}
+.user-label{
+    margin-right: 2px;
+}

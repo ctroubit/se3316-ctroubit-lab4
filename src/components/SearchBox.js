@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
 import './SearchBox.css'
+import InfoBox from './login';
 
 function SearchBox() {
   const [publishers, setPublishers] = useState([]);
   const [races, setRaces] = useState([])
   const [powers, setPowers] = useState([]);
+  const [isBlurred, setIsBlurred] = useState(false);
+  const [showInfoBox, setShowInfoBox] = useState(false);
 
   useEffect(() => {
     fetch('http://localhost:3000/api/superheroes/info')
@@ -62,6 +65,8 @@ function SearchBox() {
       .catch(error => console.error('Error', error));
   }
   return (
+    <div>
+    <div className={isBlurred ? "main-container blurred" : "main-container"}>
     <nav className="navbar navbar-expand-lg bg-body-tertiary">
       <div className="container-fluid">
         <a className="navbar-brand" href="#">
@@ -132,15 +137,16 @@ function SearchBox() {
               Search
             </button>
 
-          <form className="d-flex" role="search">
-            
-            <button className="btn btn-outline-success" type="submit">
-              Login
-            </button>
-          </form>
+          <button className="btn btn-outline-success" onClick={() => {setIsBlurred(prev => !prev)
+            setShowInfoBox(true);}}>
+            Login
+          </button>
         </div>
       </div>
     </nav>
+    </div>
+    {showInfoBox && <InfoBox close={() => {setShowInfoBox(false); setIsBlurred(false);}} />}
+    </div>
   );
 }
 export default SearchBox;
