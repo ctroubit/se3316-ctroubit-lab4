@@ -1,18 +1,173 @@
 const express = require('express');
 const cors = require('cors')
 const path = require('path');
+const nodemailer = require('nodemailer');
+const nev = require('email-verification')(require('mongoose'));
+const mongoose  = require('mongoose')
+const bcrypt = require('bcrypt');
 const { body, query, param } = require('express-validator');
-
-const {connectToDb, getDb} = require('./db')
+const {connectToDb, getUserInfoDb,getSuperheroesDb} = require('./db')
 
 let db;
 const port = 3000 || process.env.PORT
-
 
 const app = express();
 app.use(cors())
 app.use(express.static(path.join(__dirname, '..', 'client')));
 app.use(express.json())
+
+const userSchema = new mongoose.Schema({
+    username: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true }
+  });
+
+const User = mongoose.model('User', userSchema);
+
+let userInfodb;
+let superheroesDb;
+
+const transporter = nodemailer.createTransport({
+    service: 'Gmail',
+    auth: {
+      user: 'cristian.troubitsin@gmail.com',
+      pass: 'rgzt lrar zeml dguy'
+    }
+  });
+
+  nev.configure({
+    verificationURL: 'http://localhost:3000/email-verify?token=${URL}',
+    persistentUserModel: User, 
+    tempUserCollection: 'temporary_users',
+    transportOptions: transporter,
+    verifyMailOptions: {
+      from: 'Do Not Reply <cristian.troubitsin@gmail.com>',
+      subject: 'Please confirm account',
+      html: 'Click the following link to confirm your account: <a href="${URL}">${URL}</a>',
+      text: 'Please confirm your account by clicking the following link: ${URL}'
+    }
+  }, function (err, options) {
+    if (err) {
+      console.error('NEV configuration error:', err);
+      return;
+    }
+    console.log('NEV configured: ' + (typeof options === 'object'));
+  });
+
+
+ nev.generateTempUserModel(User,function(err, tempUserModel) {
+    if (err) {
+        
+        console.error('Error generating temp user model:', err);
+    } else {
+        
+        console.log('Temp user model generated');
+    }
+});
+
+
+  app.get('/email-verify', (req, res) => {
+    const token = req.query.token;
+    nev.confirmTempUser(token, function (err, user) {
+      if (user) {
+        res.json({
+          msg: 'Your account has been successfully verified.'
+        });
+      } else {
+        res.status(404).send('Verification token is invalid or has expired.');
+      }
+    });
+  });
+
+  app.post('/api/register', async (req, res) => {
+    try {
+        const { username, email, password } = req.body;
+        console.log(req.body)
+
+        if (!username || !email || !password) {
+            return res.status(400).send('All fields are required');
+        }
+
+        if (!userInfodb) {
+            return res.status(500).send('Database connection not established');
+        }
+
+        
+        const existingUser = await userInfodb.collection('login').findOne({ email: email });
+        if (existingUser) {
+        return res.status(409).send('User already exists');
+        }   
+
+        
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        const newUser = new User({ username, email, password: hashedPassword });
+        console.log(newUser)
+  
+        
+        await userInfodb.collection('login').insertOne(newUser);
+  
+      
+      nev.createTempUser(newUser, function(err, existingPersistentUser, newTempUser) {
+        if (err) {
+          console.error('Error creating temp user:', err);
+          return res.status(500).send('Internal Server Error 1 ');
+        }
+  
+        if (existingPersistentUser) {
+          return res.status(409).send('User already exists');
+        }
+  
+        if (newTempUser) {
+          var URL = newTempUser[nev.options.URLFieldName];
+          nev.sendVerificationEmail(email, URL, function(err, info) {
+            if (err) {
+              console.error('Error sending verification email:', err);
+              return res.status(500).send('Could not send verification email');
+            }
+            res.status(201).send('An email has been sent to you. Please check it to verify your account.');
+          });
+
+        } else {
+          return res.status(200).send('An email has already been sent to this email.');
+        }
+      });
+    } catch (error) {
+      console.error('Error in /api/register:', error);
+      res.status(500).send('Internal Server Error 2');
+    }
+  });
+
+  app.post('/api/login', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+
+        
+        if (!username || !password) {
+            return res.status(400).send('Email and password are required');
+        }
+
+        
+        const user = await userInfodb.collection('login').findOne({ username:username});
+        if (!user) {
+            return res.status(401).send('Invalid email or password');
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(401).send('Invalid email or password');
+        }
+
+        
+        res.status(200).send('Login successful');
+    } catch (error) {
+        console.error('Error in /api/login:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+  
 
 app.get('/', (req,res) => {
     res.sendFile(path.join(__dirname, "..", 'client', 'index.html'))
@@ -43,7 +198,7 @@ app.get('/api/superheroes',query('name').escape(),
 
             console.log('Initial query:', query);
 
-            let matchingSuperheroes = await db.collection('info').find(query).toArray();
+            let matchingSuperheroes = await superheroesDb.collection('info').find(query).toArray();
 
             if (req.query.power) {
                 if (matchingSuperheroes.length === 0) {
@@ -85,7 +240,7 @@ app.get('/api/superheroes',query('name').escape(),
 
 app.get('/api/superheroes/info',async(req,res)=>{
     try {
-        const infoCursor = db.collection('info').find();
+        const infoCursor = superheroesDb.collection('info').find();
 
         const s_info_data = await infoCursor.toArray();
 
@@ -101,7 +256,7 @@ app.get('/api/superheroes/info',async(req,res)=>{
 app.get('/api/superheroes/powers',async(req,res)=>{
     const name = "A-Bomb"
     try{
-        const powerCursor = await db.collection('powers').findOne({hero_names: name})
+        const powerCursor = await superheroesDb.collection('powers').findOne({hero_names: name})
         res.status(200).json(powerCursor);
     } catch (error) {
         console.error(error);
@@ -265,31 +420,16 @@ app.delete('/api/lists/:listName' ,param('listName').escape(), async (req, res) 
     }
 });
 
-app.put('/api/lists/sort/:listName', param('listName').escape(),async (req, res) => {
-    try {
-        const listName = req.params.listName;
-        const list = await db.collection('lists').findOne({ listName });
 
-        if (list && Array.isArray(list.superheroes)) {
-            list.superheroes.sort((a, b) => a.name.localeCompare(b.name));
-            await db.collection('lists').updateOne(
-                { listName },
-                { $set: { superheroes: list.superheroes } }
-            );
-
-            res.status(200).json(list.superheroes);
-        } else {
-            res.status(404).json({ error: `List '${listName}' not found or does not contain superheroes.` });
-        }
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Could not update list' });
+connectToDb((err) => {
+    if (err) {
+        console.error('Failed to connect to the database:', err);
+        return;
     }
+    app.listen(port, () => {
+        console.log(`Server is listening on port ${port}`);
+        userInfodb = getUserInfoDb();
+        superheroesDb = getSuperheroesDb();
+        
+    });
 });
-
-connectToDb((err)=>{
-    if(!err){
-        app.listen(port,()=>console.log(`Listening on port ${port}...`))
-        db = getDb()
-    }
-})
