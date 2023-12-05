@@ -1,5 +1,5 @@
-#login-box{
-    background-color:blue;
+#login-box {
+    background-color: blue;
     margin-top: 15vh;
     justify-content: center;
     align-items: center;
@@ -10,10 +10,29 @@
     text-align: center;
     height: 500px;
     color: white;
+    display: flex;          /* Use flexbox to align children */
+    flex-direction: column; /* Align children vertically */
+    align-items: center;    /* Center-align the child elements horizontally */
 }
-.close-button{
+
+#login-box input[type="text"],
+#login-box input[type="password"],
+#login-box input[type="email"],
+#login-box input[type="submit"] { /* Apply this style to all input elements */
+    margin: 10px 0; /* Consistent vertical margin */
+    padding: 10px;
+    height: 15px;
+    width: 80%; /* Adjust width to your preference */
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+}
+
+.close-button {
     margin-top: 10px;
+    align-self: flex-end; /* Align close button to the right */
 }
-.user-label{
-    margin-right: 2px;
+
+.user-label {
+    margin-left: 20px;
+    width: 100%; /* Ensure label takes full width */
+    text-align: left; /* Align the text to the left */
 }

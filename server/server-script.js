@@ -20,7 +20,7 @@ const userSchema = new mongoose.Schema({
     username: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true }
-  });
+});
 
 const User = mongoose.model('User', userSchema);
 
@@ -209,7 +209,7 @@ app.get('/api/superheroes',query('name').escape(),
 
                 const heroNames = matchingSuperheroes.map(hero => hero.name);
 
-                const powers = await db.collection('powers').find({ hero_names: { $in: heroNames } }).toArray();
+                const powers = await superheroesDb.collection('powers').find({ hero_names: { $in: heroNames } }).toArray();
 
                 matchingSuperheroes = matchingSuperheroes.filter(hero => {
                     const heroPowers = powers.find(power => power.hero_names.includes(hero.name));
@@ -267,8 +267,8 @@ app.get('/api/superheroes/powers',async(req,res)=>{
 app.get('/api/superheroes/powers/:hero_names',
     param('hero_names').escape(),async(req,res)=>{
     try {
-        const infoCursor = db.collection('info').find();
-        const powersCursor = db.collection('powers').find();
+        const infoCursor = superheroesDb.collection('info').find();
+        const powersCursor = superheroesDb.collection('powers').find();
 
         const s_info_data = await infoCursor.toArray();
         const s_powers_data = await powersCursor.toArray();
@@ -312,7 +312,7 @@ app.get('/api/superheroes/single/:searchBy/:value',
                 return;
         }
 
-        const matchingSuperheroes = await db.collection('info').find(query).toArray();
+        const matchingSuperheroes = await superheroesDb.collection('info').find(query).toArray();
         if (matchingSuperheroes.length === 0) {
             console.log(`No superheroes found for ${searchBy}: ${value}`);
             res.status(404).send(`No superheroes found for ${searchBy}: ${value}`);
@@ -320,7 +320,7 @@ app.get('/api/superheroes/single/:searchBy/:value',
         }
 
         const heroNames = matchingSuperheroes.map(hero => hero.name);
-        const powers = await db.collection('powers').find({ hero_names: { $in: heroNames } }).toArray();
+        const powers = await superheroesDb.collection('powers').find({ hero_names: { $in: heroNames } }).toArray();
 
         const combinedData = matchingSuperheroes.map(hero => {
             const heroPowers = powers.find(power => power.hero_names === hero.name);
@@ -344,10 +344,10 @@ app.put('/api/lists/:listName'
         const listName = req.params.listName;
         const superhero = req.body.superhero;
 
-        const list = await db.collection('lists').findOne({ listName });
+        const list = await superheroesDb.collection('lists').findOne({ listName });
 
         if (list) {
-            await db.collection('lists').updateOne(
+            await superheroesDb.collection('lists').updateOne(
                 { listName },
                 { $push: { superheroes: superhero } }
             );
@@ -370,12 +370,12 @@ app.post('/api/lists',
     const { listName, superheroes } = req.body;
 
     try {
-        const existingList = await db.collection('lists').findOne({ listName });
+        const existingList = await superheroesDb.collection('lists').findOne({ listName });
 
         if (existingList) {
             res.status(409).json({ error: 'A list with this name already exists.' });
         } else {
-            const result = await db.collection('lists').insertOne({ listName, superheroes });
+            const result = await superheroesDb.collection('lists').insertOne({ listName, superheroes });
             res.status(201).json(result);
         }
     } catch (err) {
@@ -387,7 +387,7 @@ app.post('/api/lists',
 
 app.get('/api/lists', async (req, res) => {
     try {
-        const lists = await db.collection('lists').find({}).toArray();
+        const lists = await superheroesDb.collection('lists').find({}).toArray();
         console.log(lists.listName)
         res.json(lists);
     } catch (error) {
@@ -398,7 +398,7 @@ app.get('/api/lists', async (req, res) => {
 
 app.get('/api/lists/:listName', param('listName').escape(),async (req,res) =>{
     try{
-        const list = await db.collection('lists').find({listName: req.params.listName}).toArray()
+        const list = await superheroesDb.collection('lists').find({listName: req.params.listName}).toArray()
         res.json(list)
     }catch (error) {
         console.error(error);
@@ -408,7 +408,7 @@ app.get('/api/lists/:listName', param('listName').escape(),async (req,res) =>{
 
 app.delete('/api/lists/:listName' ,param('listName').escape(), async (req, res) => {
     try {
-        const deletedList = await db.collection('lists').findOneAndDelete({ listName: req.params.listName });
+        const deletedList = await superheroesDb.collection('lists').findOneAndDelete({ listName: req.params.listName });
         if (!deletedList.value) {
             console.log(`List '${req.params.listName}' has been deleted.`);
         } else {

@@ -27,7 +27,7 @@ function Login({ close }) {
 
       if (response.ok) {
         console.log('Login successful');
-        // Handle successful login here (e.g., redirect, store user session, etc.)
+        alert('Login successful')
       } else {
         console.log('Login failed');
         // Handle login failure here (e.g., show an error message)
