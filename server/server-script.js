@@ -8,7 +8,6 @@ const bcrypt = require('bcrypt');
 const { body, query, param } = require('express-validator');
 const {connectToDb, getUserInfoDb,getSuperheroesDb} = require('./db')
 
-let db;
 const port = 3000 || process.env.PORT
 
 const app = express();
@@ -19,7 +18,11 @@ app.use(express.json())
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true }
+    password: { type: String, required: true },
+    lists: [{
+        listName: String,
+        superheroes: Array
+    }]
 });
 
 const User = mongoose.model('User', userSchema);
@@ -81,8 +84,8 @@ const transporter = nodemailer.createTransport({
 
   app.post('/api/register', async (req, res) => {
     try {
-        const { username, email, password } = req.body;
-        console.log(req.body)
+        const { username, email, password,lists} = req.body;
+        
 
         if (!username || !email || !password) {
             return res.status(400).send('All fields are required');
@@ -102,7 +105,7 @@ const transporter = nodemailer.createTransport({
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        const newUser = new User({ username, email, password: hashedPassword });
+        const newUser = new User({ username, email, password: hashedPassword, lists });
         console.log(newUser)
   
         
@@ -363,48 +366,52 @@ app.put('/api/lists/:listName'
     }
 });
 
-app.post('/api/lists',
-    body('listName').escape(),
-    body('superheroes').isArray(),
-     async (req, res) => {
-    const { listName, superheroes } = req.body;
+app.post('/api/lists', body('username').escape(), body('listName').escape(), async (req, res) => {
+    const { username, listName, superheroes } = req.body;
 
     try {
-        const existingList = await superheroesDb.collection('lists').findOne({ listName });
-
-        if (existingList) {
-            res.status(409).json({ error: 'A list with this name already exists.' });
-        } else {
-            const result = await superheroesDb.collection('lists').insertOne({ listName, superheroes });
-            res.status(201).json(result);
+        // Check if the user exists
+        const user = await userInfodb.collection('users').findOne({ username: username });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found.' });
         }
-    } catch (err) {
 
-        res.status(500).json(err);
+        // Check if the list already exists for the user
+        const listExists = user.lists.some(list => list.listName === listName);
+        if (listExists) {
+            return res.status(409).json({ error: 'A list with this name already exists for the user.' });
+        }
+
+        // Add the new list to the user's lists
+        await userInfodb.collection('users').updateOne(
+            { username: username },
+            { $push: { lists: { listName, superheroes } } }
+        );
+
+        res.status(201).json({ message: 'List added successfully.' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Could not add the list' });
     }
 });
 
 
-app.get('/api/lists', async (req, res) => {
+
+app.get('/api/lists/:username', async (req, res) => {
     try {
-        const lists = await superheroesDb.collection('lists').find({}).toArray();
-        console.log(lists.listName)
-        res.json(lists);
+        const username = req.params.username;
+        const user = await userInfodb.collection('users').findOne({ username: username });
+        console.log(req.params.username)
+        if (!user) {
+            return res.status(404).json({ error: 'User not found.' });
+        }
+
+        res.json(user.lists);
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Could not fetch lists' });
     }
 });
-
-app.get('/api/lists/:listName', param('listName').escape(),async (req,res) =>{
-    try{
-        const list = await superheroesDb.collection('lists').find({listName: req.params.listName}).toArray()
-        res.json(list)
-    }catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Could not fetch lists' });
-    }
-})
 
 app.delete('/api/lists/:listName' ,param('listName').escape(), async (req, res) => {
     try {

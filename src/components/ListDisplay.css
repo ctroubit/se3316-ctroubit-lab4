@@ -8,10 +8,17 @@
     background-color: #8EE4AF;
     color: white;
     overflow-y: auto;
+    outline: 1px;
 }
 
 .listButton {
     background: #8EE4AF;
     width: 100%; 
     
+  }
+
+  #superheroesContainer{
+    background: #8EE4AF;
+    height: 400px;
+    width: 15%;
   }

@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import './login.css';
+import { useUser } from './UserContext'; 
 
 function Login({ close }) {
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
-  const [userData, setUserData] = useState({ username: '', email: '', password: '' });
+  const [userData, setUserData] = useState({ username: '', email: '', password: '' ,lists:'',isAdmin:false});
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const { setUser } = useUser();
 
   const handleChange = (e) => {
     setUserData({ ...userData, [e.target.name]: e.target.value });
@@ -28,13 +30,15 @@ function Login({ close }) {
       if (response.ok) {
         console.log('Login successful');
         alert('Login successful')
+        setUser({ username: userData.username }); 
+        
       } else {
         console.log('Login failed');
-        // Handle login failure here (e.g., show an error message)
+        
       }
     } catch (error) {
       console.error('Error:', error);
-      // Handle network error here
+      
     }
   };
 
@@ -52,13 +56,16 @@ function Login({ close }) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(userData),
+
       });
 
       if (response.ok) {
         console.log('Account created successfully');
         setIsCreatingAccount(false);
       } else {
-        console.log('Failed to create account');
+        const errorText = await response.text();
+        console.error('Failed to create account:', errorText);
+        alert(errorText); 
       }
     } catch (error) {
       console.error('Error:', error);

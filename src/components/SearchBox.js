@@ -1,13 +1,23 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect ,useContext} from "react";
 import './SearchBox.css'
 import InfoBox from './login';
+import { UserContext } from './UserContext'; 
+import SuperheroSearch from './SuperheroSearch'; 
 
 function SearchBox() {
   const [publishers, setPublishers] = useState([]);
-  const [races, setRaces] = useState([])
+  const [races, setRaces] = useState([]);
   const [powers, setPowers] = useState([]);
   const [isBlurred, setIsBlurred] = useState(false);
   const [showInfoBox, setShowInfoBox] = useState(false);
+  const { user } = useContext(UserContext);
+  const [searchName, setSearchName] = useState('');
+  const [selectedPower, setSelectedPower] = useState(''); 
+  const [searchResults, setSearchResults] = useState([]);
+  const [selectedRace, setSelectedRace] = useState('');
+  const [selectedPublisher, setSelectedPublisher] = useState('');
+ 
+
 
   useEffect(() => {
     fetch('http://localhost:3000/api/superheroes/info')
@@ -22,13 +32,11 @@ function SearchBox() {
     return response.json();
   })
   .then(data => {
-        console.log(data)
         const uniquePublishers = new Set();
         const uniqueRaces = new Set();
         for (const superhero of data) {
           if (superhero.Publisher) {
             uniquePublishers.add(superhero.Publisher);
-            console.log(superhero.publisher);
           }
           if(superhero.Race){
             uniqueRaces.add(superhero.Race)
@@ -60,10 +68,28 @@ function SearchBox() {
               }
           });
 
-          setPowers([...allPowers]); // Set powers state
+          setPowers([...allPowers]); 
       })
       .catch(error => console.error('Error', error));
   }
+
+  const handleSearch = async () => {
+    let url = `http:localhost:3000/api/superheroes?`;
+        url += searchName ? `name=${encodeURIComponent(searchName)}&` : '';
+        url += selectedRace ? `Race=${selectedRace}&` : '';
+        url += selectedPublisher ? `Publisher=${selectedPublisher}&` : '';
+        url += selectedPower ? `power=${selectedPower}` : '';
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+        console.log(data)
+        setSearchResults(data); 
+    } catch (error) {
+        console.error('Search Error:', error);
+    }
+};
   return (
     <div>
     <div className={isBlurred ? "main-container blurred" : "main-container"}>
@@ -104,24 +130,22 @@ function SearchBox() {
                 Race
               </a>
             <li className="race-item">
-            <select id="raceSelection" className="form-select">
-                  {races.map((races, index) => (
-                      <option key={index} value={races}>
-                          {races}
-                      </option>
-                  ))}
-              </select>
+            <select id="raceSelection" className="form-select"
+                    onChange={(e) => setSelectedRace(e.target.value)}>
+                {races.map((race, index) => (
+                    <option key={index} value={race}>{race}</option>
+                ))}
+            </select>
             </li>
             <a className="nav-link active" aria-current="page" href="#">
                 Publisher
               </a>
-            <select id="publisherSelection" className="form-select ">
-                  {publishers.map((publisher, index) => (
-                      <option key={index} value={publisher}>
-                          {publisher}
-                      </option>
-                  ))}
-              </select>
+              <select id="publisherSelection" className="form-select"
+                    onChange={(e) => setSelectedPublisher(e.target.value)}>
+                {publishers.map((publisher, index) => (
+                    <option key={index} value={publisher}>{publisher}</option>
+                ))}
+            </select>
               <a className="nav-link active" aria-current="page" href="#">
                 Powers
               </a>
@@ -133,8 +157,8 @@ function SearchBox() {
                 ))}
               </select>      
           </ul>
-          <button className="btn btn-outline-success" id = 'searchButton'>
-              Search
+          <button className="btn btn-outline-success" id='searchButton' onClick={handleSearch}>
+                Search
             </button>
 
           <button className="btn btn-outline-success" onClick={() => {setIsBlurred(prev => !prev)
@@ -145,7 +169,8 @@ function SearchBox() {
       </div>
     </nav>
     </div>
-    {showInfoBox && <InfoBox close={() => {setShowInfoBox(false); setIsBlurred(false);}} />}
+    {showInfoBox && !user && <InfoBox close={() => {setShowInfoBox(false); setIsBlurred(false);}} />}
+    {searchResults && <SuperheroSearch superheroes={searchResults} />}
     </div>
   );
 }

@@ -1,142 +1,123 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect ,useContext} from 'react';
 import './ListDisplay.css'
+import { UserContext } from './UserContext'; 
+
 
 function ListDisplay({ listName }) {
-    const [lists, setLists] = useState([]);
-    const [selectedList, setSelectedList] = useState('');
-    const [listElements, setListElements] = useState([]);
-    const [error, setError] = useState('');
-  
+  const [lists, setLists] = useState([]);
+  const [listElements, setListElements] = useState([]);
+  const [selectedList, setSelectedList] = useState('');
+  const [error, setError] = useState('');
+  const [newListName, setNewListName] = useState('');
+  const { user } = useContext(UserContext);
+
   useEffect(() => {
-    fetchLists();
-  }, []);
-
- 
-  const fetchLists = async () => {
-    try {
-      const response = await fetch('http://localhost:3000/api/lists');
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      setLists(data);
-    } catch (error) {
-      console.error('Error fetching lists:', error);
-      setError(error.message);
-    }
-    }   
-
-   
-  const displayListElements = async (listName) => {
-    try {
-      const response = await fetch(`http://localhost:3000/api/lists/${listName}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      
-      if (data && Array.isArray(data.superheroes)) {
-        setListElements(data.superheroes);
-      }
-    } catch (error) {
-      console.error('Error displaying list elements:', error);
-      setError(error.message);
-    }
-  };
-
-
-  const createNewList = async (userInput) => {
-    try {
-      const data = {
-        listName: userInput,
-        superheroes: []
-      };
-      const response = await fetch('http://localhost:3000/api/lists/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-      });
-      if (!response.ok) {
-        if (response.status === 409) { 
-          alert('List Name Already Exists!');
-        } else {
+    const fetchLists = async () => {
+      if (!user) return; 
+      try {
+        const response = await fetch(`http://localhost:3000/api/lists/${user.username}`);
+        if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-      } else {
-        await fetchLists(); 
+        const data = await response.json();
+        setLists(data);
+      } catch (error) {
+        console.error('Error fetching lists:', error);
+        setError(error.message);
       }
-    } catch (error) {
-      console.error('Error creating a new list:', error);
-      setError(error.message);
-    }
-  };
+    };
+    fetchLists();
+  }, [user]); 
 
- 
-  const selectList = (listName) => {
-    setSelectedList(listName);
-    displayListElements(listName);
-  };
-
-
-  const addToMyList = async (superhero) => {
+  const handleCreateList = async (e) => {
+    e.preventDefault();
     try {
-      const response = await fetch(`http://localhost:3000/api/lists/${selectedList}`, {
-        method: 'PUT',
+      const response = await fetch('http://localhost:3000/api/lists', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ superhero: superhero })
+        body: JSON.stringify({
+          username: 'username', 
+          listName: newListName,
+          superheroes: [] 
+        }),
       });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      await displayListElements(selectedList); 
+
+      if (response.ok) {
+        setLists([...lists, { listName: newListName, superheroes: [] }]);
+        setNewListName('');
+      } else {
+        console.error('Failed to create the list');
+      }
     } catch (error) {
-      console.error('Error adding superhero to list:', error);
-      setError(error.message);
+      console.error('Error:', error);
     }
   };
 
+  useEffect(() => {
+      const selectedList = lists.find(list => list.listName === listName);
+      if (selectedList) {
+          setListElements(selectedList.superheroes);
+      }
+  }, [listName, lists]);
+
+  const handleListClick = (name) => {
+    const selectedList = lists.find(list => list.listName === name);
+    if (selectedList) {
+      setListElements(selectedList.superheroes);
+      setSelectedList(listName);
+      
+      listName = name;
+    }
+  };
+
+  if (!user) {
+    return <div>Please log in to view your lists.</div>;
+  }
+
   if (error) {
-    return <div>Error: {error}</div>;
+      return <div>Error: {error}</div>;
   }
 
   if (lists.length === 0) {
-    return <div>Loading lists or no lists available...</div>;
+      return <div>Loading lists or no lists available...</div>;
   }
+
   return (
     <div>
-        <div id='listContainer'>
-            <h1>Lists</h1>
-            {lists.map((listItem, index) => (
-                <button
-                    key={index}
-                    onClick={() => {
-                        selectList(listItem.listName);
-                        displayListElements(listItem.listName);
-                    }}
-                    className={`listButton ${selectedList === listItem.listName ? 'selected' : ''}`}
-                >
-                    {listItem.listName}
-                </button>
-            ))}
-        </div>
-
-        <div id='superheroesContainer'>
-            <h2>{selectedList && `${selectedList} Superheroes`}</h2>
-            {selectedList && listElements.map((element, index) => (
-                <div key={index} className="superheroItem">
-                    {/* Display superhero details here */}
-                    <p>{element.name}</p>
-                    {/* You can add more superhero details here */}
-                    <button onClick={() => addToMyList(element)}>Add to List</button>
-                </div>
-            ))}
-        </div>
+      <div id='listContainer'>
+        <h1>Lists</h1>
+        {lists.map((listItem, index) => (
+          <button 
+            key={index} 
+            onClick={() => handleListClick(listItem.listName)}
+            className={`listButton ${listItem.listName === listName ? 'selected' : ''}`}
+          >
+            {listItem.listName}
+          </button>
+        ))}
+        <form onSubmit={handleCreateList}>
+          <input 
+            type="text" 
+            value={newListName} 
+            onChange={(e) => setNewListName(e.target.value)} 
+            placeholder="New list name" 
+          />
+          <button type="submit">Create List</button>
+        </form>
+      </div>
+      <div id='superheroesContainer'>
+        <h2>{selectedList && `${selectedList}`}</h2>
+        {listElements.map((element, index) => (
+          <div key={index} className="superheroItem">
+            <p>{element.name}</p>
+          </div>
+        ))}
+      </div>
     </div>
-);
+  );
+
 }
-
-
 
 export default ListDisplay;
