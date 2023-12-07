@@ -8,7 +8,7 @@ function Footer() {
         <div className="row">
           {/* Security and Privacy Policy */}
           <div className="col">
-            <a href="/privacy.html" className="footer-link">
+            <a href='/privacy.html' className="footer-link">
               Security and Privacy Policy
             </a>
           </div>

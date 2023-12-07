@@ -1,32 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import './SuperheroSearch.css'
 
-function SuperheroSearch() {
-    const [superheroes, setSuperheroes] = useState([]);
+function SuperheroSearch({superheroes}) {
+    
     const [selectedList, setSelectedList] = useState(''); 
 
-    useEffect(() => {
-        
-        fetchSuperheroInfo();
-    }, []); 
-
-    async function fetchSuperheroInfo() {
-        try {
-            const response = await fetch('http://localhost:3000/api/superheroes'); // Adjust the URL as needed
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            const data = await response.json();
-            console.log(data)
-            setSuperheroes(data);
-        } catch (error) {
-            console.error('Error fetching superheroes:', error);
-        }
-    }
 
     function createSuperheroesDiv(fetchedSuperheroes) {
         return (
-            <div style={{ background: '#3500D3', /* Other styles */ }}>
+            <div id = 'superheroesDiv'style={{ background: '#3500D3', /* Other styles */ }}>
                 <ul style={{ /* Styles for ul */ }}>
                     {fetchedSuperheroes.map(hero => createSuperheroListItem(hero))}
                 </ul>

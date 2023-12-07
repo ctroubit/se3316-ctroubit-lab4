@@ -74,17 +74,17 @@ function SearchBox() {
   }
 
   const handleSearch = async () => {
-    let url = `http:localhost:3000/api/superheroes?`;
-        url += searchName ? `name=${encodeURIComponent(searchName)}&` : '';
-        url += selectedRace ? `Race=${selectedRace}&` : '';
-        url += selectedPublisher ? `Publisher=${selectedPublisher}&` : '';
-        url += selectedPower ? `power=${selectedPower}` : '';
-
+    let url = `http://localhost:3000/api/superheroes?`;
+    url += searchName ? `name=${encodeURIComponent(searchName)}&` : '';
+    url += selectedRace ? `Race=${encodeURIComponent(selectedRace)}&` : '';
+    url += selectedPublisher ? `Publisher=${encodeURIComponent(selectedPublisher)}&` : '';
+    url += selectedPower ? `power=${encodeURIComponent(selectedPower)}` : '';
     try {
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
         console.log(data)
+        
         setSearchResults(data); 
     } catch (error) {
         console.error('Search Error:', error);
@@ -118,12 +118,13 @@ function SearchBox() {
             </li>
             <li>
               <form className="d-flex" role="search">
-                <input
-                  className="form-control me-2"
-                  type="search"
-                  placeholder="Search"
-                  aria-label="Search"
-                ></input>
+              <input
+                className="form-control me-2"
+                type="search"
+                placeholder="Search"
+                aria-label="Search"
+                value={searchName}
+                onChange={(e) => setSearchName(e.target.value)}/>
               </form>
             </li>
             <a className="nav-link active" aria-current="page" href="#">
@@ -132,6 +133,7 @@ function SearchBox() {
             <li className="race-item">
             <select id="raceSelection" className="form-select"
                     onChange={(e) => setSelectedRace(e.target.value)}>
+                      <option value="">Select Race</option>
                 {races.map((race, index) => (
                     <option key={index} value={race}>{race}</option>
                 ))}
@@ -142,6 +144,7 @@ function SearchBox() {
               </a>
               <select id="publisherSelection" className="form-select"
                     onChange={(e) => setSelectedPublisher(e.target.value)}>
+                      <option value="">Select Publisher</option>
                 {publishers.map((publisher, index) => (
                     <option key={index} value={publisher}>{publisher}</option>
                 ))}
@@ -150,6 +153,7 @@ function SearchBox() {
                 Powers
               </a>
               <select id="powerSelection" className="form-select">
+              <option value="">Select Power</option>
                 {powers.map((power, index) => (
                   <option key={index} value={power}>
                     {power}

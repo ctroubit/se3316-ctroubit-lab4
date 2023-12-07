@@ -22,7 +22,8 @@ const userSchema = new mongoose.Schema({
     lists: [{
         listName: String,
         superheroes: Array
-    }]
+    }],
+    isAdmin: {type:Boolean, required:true}
 });
 
 const User = mongoose.model('User', userSchema);
