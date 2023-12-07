@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import './login.css';
 import { useUser } from './UserContext'; 
 
+
 function Login({ close }) {
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
   const [userData, setUserData] = useState({ username: '', email: '', password: '' ,lists:'',isAdmin:false});
@@ -30,6 +31,7 @@ function Login({ close }) {
       if (response.ok) {
         console.log('Login successful');
         alert('Login successful')
+        
         setUser({ username: userData.username }); 
         
       } else {

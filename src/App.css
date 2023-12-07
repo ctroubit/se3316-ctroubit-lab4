@@ -5,5 +5,11 @@
 .blur-effect {
   filter: blur(5px);
 }
+.content-container {
+  display: flex;
+  /* Adjust the following properties as needed */
+  justify-content: center;
+  align-items: left;
+}
 
 

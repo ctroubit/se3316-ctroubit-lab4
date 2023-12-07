@@ -371,19 +371,19 @@ app.post('/api/lists', body('username').escape(), body('listName').escape(), asy
     const { username, listName, superheroes } = req.body;
 
     try {
-        // Check if the user exists
+        
         const user = await userInfodb.collection('users').findOne({ username: username });
         if (!user) {
             return res.status(404).json({ error: 'User not found.' });
         }
 
-        // Check if the list already exists for the user
+        
         const listExists = user.lists.some(list => list.listName === listName);
         if (listExists) {
             return res.status(409).json({ error: 'A list with this name already exists for the user.' });
         }
 
-        // Add the new list to the user's lists
+        
         await userInfodb.collection('users').updateOne(
             { username: username },
             { $push: { lists: { listName, superheroes } } }
@@ -401,7 +401,7 @@ app.post('/api/lists', body('username').escape(), body('listName').escape(), asy
 app.get('/api/lists/:username', async (req, res) => {
     try {
         const username = req.params.username;
-        const user = await userInfodb.collection('users').findOne({ username: username });
+        const user = await userInfodb.collection('login').findOne({ username: username });
         console.log(req.params.username)
         if (!user) {
             return res.status(404).json({ error: 'User not found.' });

@@ -1,11 +1,11 @@
 import React, { useContext, useState } from 'react';
 import Login from './components/login';
 import ListDisplay from './components/ListDisplay';
-import SuperheroSearch from './components/SuperheroSearch'; // Import the SuperheroSearch component
 import { UserContext } from './components/UserContext'; 
 import SearchBox from './components/SearchBox';
 import './App.css';
 import Footer from './components/Footer'
+
 function App() {
   const { user, setUser } = useContext(UserContext);
   const [isBlurred, setIsBlurred] = useState(false);
@@ -13,7 +13,7 @@ function App() {
 
   const handleLoginSuccess = (userData) => {
     setUser(userData);
-    setIsBlurred(false);
+    setIsBlurred(false); // Clear blur on login success
     setShowLogin(false);
   };
 
@@ -23,20 +23,18 @@ function App() {
 
   return (
     <div className={isBlurred ? 'blur-effect' : ''}>
-      <SearchBox setIsBlurred={setIsBlurred} onLoginClick={handleLoginClick} />
-      
       {showLogin && (
         <Login onLoginSuccess={handleLoginSuccess} />
       )}
-      {user && (
-        <>
+      <div className="content-container">
+        <SearchBox setIsBlurred={setIsBlurred} onLoginClick={handleLoginClick} />
+        {user && (
           <ListDisplay listName="Your List Name" />
-          
-        </>
-      )}
-      <Footer></Footer>
+        )}
+      </div>
+      <Footer />
     </div>
-  );
+  )
 }
 
 export default App;
