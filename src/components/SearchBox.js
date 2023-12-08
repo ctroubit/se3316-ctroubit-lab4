@@ -15,6 +15,7 @@ function SearchBox({onSearch}) {
   const [selectedRace, setSelectedRace] = useState("");
   const [selectedPublisher, setSelectedPublisher] = useState("");
   const [showAdminDropdown, setShowAdminDropdown] = useState(false);
+  const [fetchedUsers, setFetchedUsers] = useState([]);
 
   useEffect(() => {
     fetch("http://localhost:3000/api/superheroes/info")
@@ -98,11 +99,48 @@ function SearchBox({onSearch}) {
       }
   
       const data = await response.json();
-      console.log(data);
+      console.log(data)
+      setFetchedUsers(data); 
+      
     } catch (error) {
       console.error('Error fetching users:', error);
     }
+    
   }
+  async function toggleActivated(username, newStatus) {
+    const token = localStorage.getItem('token');
+    try {
+      await fetch(`http://localhost:3000/api/admin/toggle-activated/${username}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ isActivated: newStatus })
+      });
+      fetchUsers(); // Refresh the user list
+    } catch (error) {
+      console.error('Error toggling activation status:', error);
+    }
+  }
+  
+  async function toggleAdmin(username, newStatus) {
+    const token = localStorage.getItem('token');
+    try {
+      await fetch(`http://localhost:3000/api/admin/toggle-admin/${username}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ isAdmin: newStatus })
+      });
+      fetchUsers(); // Refresh the user list
+    } catch (error) {
+      console.error('Error toggling admin status:', error);
+    }
+  }
+  
   
   
   return (
@@ -232,7 +270,33 @@ function SearchBox({onSearch}) {
         onSuccess={handleLoginSuccess} 
         />
       )}
-      
+      {user && user.isAdmin && (
+        <button onClick={fetchUsers}>Fetch List</button>
+
+      )}
+       {fetchedUsers.length > 0 && (
+  <div className="fetched-users">
+    {fetchedUsers.map((user, index) => (
+      <div key={index}>
+        <p>Username: {user.username}</p>
+        <p>
+          Activated: 
+          {user.isActivated ? 'Yes' : 'No'}
+          <button onClick={() => toggleActivated(user.username, !user.isActivated)}>
+            Toggle Activated
+          </button>
+        </p>
+        <p>
+          Admin: 
+          {user.isAdmin ? 'Yes' : 'No'}
+          <button onClick={() => toggleAdmin(user.username, !user.isAdmin)}>
+            Toggle Admin
+          </button>
+        </p>
+      </div>
+    ))}
+  </div>
+)}
     </div>
   );
 }

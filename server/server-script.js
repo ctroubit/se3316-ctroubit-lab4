@@ -452,13 +452,13 @@ app.delete('/api/lists/:username/:listName', param('username').escape(), param('
 const adminAuthMiddleware = async (req, res, next) => {
     try {
         const token = req.headers.authorization.split(' ')[1]; 
-        console.log(token)
+        
         if (!token) {
             return res.status(401).send('No token provided');
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        console.log(decoded.email)
+        
         const adminUser = await userInfodb.collection('login').findOne({email: decoded.email });
 
 
@@ -479,6 +479,49 @@ app.get('/api/users', adminAuthMiddleware, async (req, res) => {
         res.json(users);
     } catch (error) {
         console.error('Error fetching users:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+app.put('/api/admin/toggle-admin/:username', adminAuthMiddleware, async (req, res) => {
+    try {
+        const { username } = req.params;
+        const { isAdmin } = req.body;
+
+        const user = await userInfodb.collection('login').findOne({ username: username });
+        if (!user) {
+            return res.status(404).send('User not found');
+        }
+
+        await userInfodb.collection('login').updateOne(
+            { username: username },
+            { $set: { isAdmin: isAdmin } }
+        );
+
+        res.json({ message: `User '${username}' admin status updated to ${isAdmin}.` });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+app.put('/api/admin/toggle-activated/:username', adminAuthMiddleware, async (req, res) => {
+    try {
+        const { username } = req.params;
+        const { isActivated } = req.body;
+
+        const user = await userInfodb.collection('login').findOne({ username: username });
+        if (!user) {
+            return res.status(404).send('User not found');
+        }
+
+        await userInfodb.collection('login').updateOne(
+            { username: username },
+            { $set: { isActivated: isActivated } }
+        );
+
+        res.json({ message: `User '${username}' activation status updated to ${isActivated}.` });
+    } catch (error) {
+        console.error(error);
         res.status(500).send('Internal Server Error');
     }
 });
