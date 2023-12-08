@@ -28,22 +28,28 @@ function Login({ close }) {
           password: userData.password
         }),
       });
-
+  
       if (response.ok) {
+        const responseBody = await response.json();
         console.log('Login successful');
-        alert('Login successful')
-        setIsBlurred()
-        setUser({ username: userData.username }); 
+        alert('Login successful');
+        setIsBlurred();
+  
+        localStorage.setItem('token', responseBody.token);
+  
+        setUser({ 
+          username: userData.username, 
+          isAdmin: responseBody.isAdmin
+        }); 
         
       } else {
         console.log('Login failed');
-        
       }
     } catch (error) {
       console.error('Error:', error);
-      
     }
   };
+  
 
   const handleCreateAccountSubmit = async (e) => {
     e.preventDefault();

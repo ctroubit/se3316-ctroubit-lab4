@@ -12,7 +12,6 @@ function SearchBox({onSearch}) {
   const { user } = useContext(UserContext);
   const [searchName, setSearchName] = useState("");
   const [selectedPower, setSelectedPower] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
   const [selectedRace, setSelectedRace] = useState("");
   const [selectedPublisher, setSelectedPublisher] = useState("");
 
@@ -77,6 +76,30 @@ function SearchBox({onSearch}) {
     console.log('Search clicked', { name: searchName, race: selectedRace, publisher: selectedPublisher, power: selectedPower });
     onSearch({ name: searchName, race: selectedRace, publisher: selectedPublisher, power: selectedPower });
   };
+
+  async function fetchUsers() {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch('http://localhost:3000/api/users', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+  
+      const data = await response.json();
+      console.log(data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  }
+  
+  
   return (
     <div>
       <div className={isBlurred ? "main-container blurred" : "main-container"}>
@@ -168,7 +191,12 @@ function SearchBox({onSearch}) {
                 onClick={handleSearchClick}>
                 Search
               </button>
-
+              {user && user.isAdmin && (
+                <div>
+                  {/* Admin-only option here */}
+                  <button className="btn btn-outline-danger">Admin Option</button>
+                </div>
+              )}
               <button
                 className="btn btn-outline-success"
                 onClick={() => {

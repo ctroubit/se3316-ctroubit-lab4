@@ -19,7 +19,7 @@ function SuperheroSearch({searchParams}) {
             if (searchParams.race) queryParams.append('Race', searchParams.race);
             if (searchParams.publisher) queryParams.append('Publisher', searchParams.publisher);
             if (searchParams.power) queryParams.append('power', searchParams.power);
-            // Add limit if needed: queryParams.append('limit', 'YOUR_LIMIT');
+            // Add limit: queryParams.append('limit', 'YOUR_LIMIT');
     
             let url = `http://localhost:3000/api/superheroes?${queryParams.toString()}`;
     

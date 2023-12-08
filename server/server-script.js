@@ -1,3 +1,4 @@
+require('dotenv').config({ path: '/home/cristian/Desktop/3316/se3316-ctroubit-lab4/.env' });
 const express = require('express');
 const cors = require('cors')
 const path = require('path');
@@ -7,12 +8,16 @@ const mongoose  = require('mongoose')
 const bcrypt = require('bcrypt');
 const { body, query, param } = require('express-validator');
 const {connectToDb, getUserInfoDb,getSuperheroesDb} = require('./db')
+const jwt = require('jsonwebtoken');
+
+
 
 const port = 3000 || process.env.PORT
 
+
 const app = express();
 app.use(cors())
-app.use(express.static(path.join(__dirname, '..', 'client')));
+app.use(express.static(path.join(__dirname, '..', 'src')));
 app.use(express.json())
 
 const userSchema = new mongoose.Schema({
@@ -25,13 +30,15 @@ const userSchema = new mongoose.Schema({
     }],
     isEmailVerified:{type:Boolean},
     isActivated:{type:Boolean},
-    isAdmin: {type:Boolean}
+    isAdmin: {type:Boolean},
+    token:{type:String, reqired:true}
 });
 
 const User = mongoose.model('User', userSchema);
 
 let userInfodb;
 let superheroesDb;
+
 
 const transporter = nodemailer.createTransport({
     service: 'Gmail',
@@ -107,6 +114,12 @@ const transporter = nodemailer.createTransport({
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
+        const token = jwt.sign(
+            { userId: username, email: email},
+            process.env.JWT_SECRET, 
+            { expiresIn: '24h' }    
+          );
+
         const newUser = new User({ 
             username, 
             email, 
@@ -114,12 +127,15 @@ const transporter = nodemailer.createTransport({
             lists:[],
             isEmailVerified:false,
             isActivated: true, 
-            isAdmin: false 
+            isAdmin: false,
+            token
         });
   
         await userInfodb.collection('login').insertOne(newUser);
 
-        res.status(201).send('Account creation successful!');
+    
+        
+        res.status(201).json({ message: 'Account creation successful!', token });
 
     } catch (error) {
       console.error('Error in /api/register:', error);
@@ -148,7 +164,17 @@ const transporter = nodemailer.createTransport({
         }
 
         
-        res.status(200).send('Login successful');
+        const token = jwt.sign(
+            { userId: user._id, email: user.email },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+          );
+      
+          res.json({ 
+            message: 'Logged in successfully!', 
+            token, 
+            isAdmin: user.isAdmin
+        });
     } catch (error) {
         console.error('Error in /api/login:', error);
         res.status(500).send('Internal Server Error');
@@ -422,6 +448,37 @@ app.delete('/api/lists/:username/:listName', param('username').escape(), param('
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Could not delete list' });
+    }
+});
+
+const adminAuthMiddleware = async (req, res, next) => {
+    try {
+        const token = req.headers.authorization.split(' ')[1]; 
+        if (!token) {
+            return res.status(401).send('No token provided');
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const adminUser = await userInfodb.collection('login').findOne({ _id: decoded.userId });
+
+        if (!adminUser || !adminUser.isAdmin) {
+            return res.status(403).send('Access denied');
+        }
+
+        req.user = adminUser; 
+        next();
+    } catch (error) {
+        res.status(401).send('Invalid token');
+    }
+};
+
+app.get('/api/users', adminAuthMiddleware, async (req, res) => {
+    try {
+        const users = await userInfodb.collection('login').find({}, { projection: { username: 1, isActivated: 1, isAdmin: 1 } }).toArray();
+        res.json(users);
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        res.status(500).send('Internal Server Error');
     }
 });
 
