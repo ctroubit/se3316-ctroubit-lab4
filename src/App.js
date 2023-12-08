@@ -1,19 +1,19 @@
 import React, { useContext, useState } from 'react';
 import Login from './components/login';
 import ListDisplay from './components/ListDisplay';
-import { UserContext } from './components/UserContext'; 
 import SearchBox from './components/SearchBox';
+import SuperheroSearch from './components/SuperheroSearch';
+import { UserContext } from './components/UserContext';
 import './App.css';
-import Footer from './components/Footer'
+import Footer from './components/Footer';
 
 function App() {
   const { user, setUser } = useContext(UserContext);
-  const [isBlurred, setIsBlurred] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
 
   const handleLoginSuccess = (userData) => {
     setUser(userData);
-    setIsBlurred(false); // Clear blur on login success
     setShowLogin(false);
   };
 
@@ -21,20 +21,25 @@ function App() {
     setShowLogin(true);
   };
 
+  const handleSearch = (params) => {
+    setSearchResults(params);
+  };
+
   return (
-    <div className={isBlurred ? 'blur-effect' : ''}>
-      {showLogin && (
-        <Login onLoginSuccess={handleLoginSuccess} />
-      )}
-      <div className="content-container">
-        <SearchBox setIsBlurred={setIsBlurred} onLoginClick={handleLoginClick} />
-        {user && (
-          <ListDisplay listName="Your List Name" />
-        )}
+    <div className="app-container">
+      <div className="navbar">
+        <SearchBox onSearch={handleSearch} />
+      </div>
+      <div className="sidebar">
+        {user && <ListDisplay listName="Your List Name" />}
+      </div>
+      <div className="main">
+        <SuperheroSearch searchParams={searchResults} />
+        {showLogin && <Login onLoginSuccess={handleLoginSuccess} />}
       </div>
       <Footer />
     </div>
-  )
+  );
 }
 
 export default App;

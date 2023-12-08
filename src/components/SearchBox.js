@@ -2,9 +2,8 @@ import React, { useState, useEffect, useContext } from "react";
 import "./SearchBox.css";
 import InfoBox from "./login";
 import { UserContext } from "./UserContext";
-import SuperheroSearch from "./SuperheroSearch";
 
-function SearchBox() {
+function SearchBox({onSearch}) {
   const [publishers, setPublishers] = useState([]);
   const [races, setRaces] = useState([]);
   const [powers, setPowers] = useState([]);
@@ -74,29 +73,10 @@ function SearchBox() {
     setIsBlurred(false);
     setShowInfoBox(false);
   }
-  
-
-  const handleSearch = async () => {
-    let url = `http://localhost:3000/api/superheroes?`;
-    url += searchName ? `name=${encodeURIComponent(searchName)}&` : "";
-    url += selectedRace ? `Race=${encodeURIComponent(selectedRace)}&` : "";
-    url += selectedPublisher
-      ? `Publisher=${encodeURIComponent(selectedPublisher)}&`
-      : "";
-    url += selectedPower ? `power=${encodeURIComponent(selectedPower)}` : "";
-    try {
-      const response = await fetch(url);
-      if (!response.ok)
-        throw new Error(`HTTP error! status: ${response.status}`);
-      const data = await response.json();
-      console.log(data);
-
-      setSearchResults(data);
-    } catch (error) {
-      console.error("Search Error:", error);
-    }
+  const handleSearchClick = () => {
+    console.log('Search clicked', { name: searchName, race: selectedRace, publisher: selectedPublisher, power: selectedPower });
+    onSearch({ name: searchName, race: selectedRace, publisher: selectedPublisher, power: selectedPower });
   };
-  
   return (
     <div>
       <div className={isBlurred ? "main-container blurred" : "main-container"}>
@@ -173,7 +153,7 @@ function SearchBox() {
                 <a className="nav-link active" aria-current="page" href="#">
                   Powers
                 </a>
-                <select id="powerSelection" className="form-select">
+                <select id="powerSelection" className="form-select" onChange={(e) => setSelectedPower(e.target.value)}>
                   <option value="">Select Power</option>
                   {powers.map((power, index) => (
                     <option key={index} value={power}>
@@ -185,8 +165,7 @@ function SearchBox() {
               <button
                 className="btn btn-outline-success"
                 id="searchButton"
-                onClick={handleSearch}
-              >
+                onClick={handleSearchClick}>
                 Search
               </button>
 
@@ -209,7 +188,7 @@ function SearchBox() {
         onSuccess={handleLoginSuccess} 
         />
       )}
-      {searchResults && <SuperheroSearch superheroes={searchResults} />}
+      
     </div>
   );
 }

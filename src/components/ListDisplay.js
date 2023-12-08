@@ -1,6 +1,7 @@
 import React, { useState, useEffect ,useContext} from 'react';
 import './ListDisplay.css'
 import { UserContext } from './UserContext'; 
+import SuperheroSearch from './SuperheroSearch';
 
 
 function ListDisplay({ listName }) {
@@ -10,6 +11,8 @@ function ListDisplay({ listName }) {
   const [error, setError] = useState('');
   const [newListName, setNewListName] = useState('');
   const { user } = useContext(UserContext);
+  const [searchResults, setSearchResults] = useState([]);
+  
 
   useEffect(() => {
     const fetchLists = async () => {
@@ -115,6 +118,7 @@ function ListDisplay({ listName }) {
           </div>
         ))}
       </div>
+      {searchResults && <SuperheroSearch superheroes={searchResults} />}
     </div>
   );
 

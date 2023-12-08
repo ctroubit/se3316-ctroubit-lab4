@@ -3,8 +3,8 @@
     flex-direction: column;
     align-items: center;
     justify-content: top;
-    height: 400px;
-    width: 15%;
+    height: 200px;
+    
     background-color: #8EE4AF;
     color: white;
     overflow-y: auto;
@@ -19,6 +19,6 @@
 
   #superheroesContainer{
     background: #8EE4AF;
-    height: 400px;
-    width: 15%;
+    height: 200px;
+    
   }
