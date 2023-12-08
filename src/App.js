@@ -11,6 +11,7 @@ function App() {
   const { user, setUser } = useContext(UserContext);
   const [showLogin, setShowLogin] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
+  const [selectedList, setSelectedList] = useState('');
 
   const handleLoginSuccess = (userData) => {
     setUser(userData);
@@ -24,6 +25,9 @@ function App() {
   const handleSearch = (params) => {
     setSearchResults(params);
   };
+  const handleListSelection = (listName) => {
+    setSelectedList(listName);
+  };
 
   return (
     <div className="app-container">
@@ -31,10 +35,10 @@ function App() {
         <SearchBox onSearch={handleSearch} />
       </div>
       <div className="sidebar">
-        {user && <ListDisplay listName="Your List Name" />}
+        {user && <ListDisplay  listName={selectedList} onListSelect={handleListSelection}/>}
       </div>
       <div className="main">
-        <SuperheroSearch searchParams={searchResults} />
+        <SuperheroSearch searchParams={searchResults} selectedList={selectedList} setSelectedList={setSelectedList} />
         {showLogin && <Login onLoginSuccess={handleLoginSuccess} />}
       </div>
       <Footer />

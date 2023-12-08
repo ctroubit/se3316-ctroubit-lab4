@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect ,useContext} from 'react';
 import './SuperheroSearch.css'
+import { UserContext } from './UserContext';
 
 function SuperheroSearch({searchParams}) {
-    
+    const { user } = useContext(UserContext);
+    const username = user?.username;
     const [selectedList, setSelectedList] = useState(''); 
     const [superheroes, setSuperheroes] = useState([]);
     const [hasResults, setHasResults] = useState(true);
@@ -11,7 +13,7 @@ function SuperheroSearch({searchParams}) {
         const fetchSuperheroes = async () => {
             console.log("Search Params:", searchParams);
     
-            // Constructing the query parameters string
+           
             const queryParams = new URLSearchParams();
             if (searchParams.name) queryParams.append('name', searchParams.name);
             if (searchParams.race) queryParams.append('Race', searchParams.race);
@@ -51,8 +53,33 @@ function SuperheroSearch({searchParams}) {
         );
     }
 
-    function addToMyList(){
-        
+    function addToMyList(hero, username) {
+        console.log(username)
+        console.log(selectedList)
+        if (!selectedList || !username) {
+            alert("Please select a list and ensure the user is logged in.");
+            return;
+        }
+    
+        fetch(`http://localhost:3000/api/lists/${username}/${selectedList}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ superhero: hero }),
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Network response was not ok.');
+        })
+        .then(data => {
+            alert(`Superhero added to list: ${data.message}`);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
     }
     
     function createSuperheroListItem(hero) {
@@ -68,7 +95,7 @@ function SuperheroSearch({searchParams}) {
             <div>{`Race: ${hero.Race}`}</div>
             <div>{`Skin Color: ${hero["Skin color"]}`}</div>
             <div>{`Weight: ${hero.Weight}`}</div>
-            <button onClick={() => addToMyList(hero, selectedList)}>Add to List</button>
+            <button onClick={() => addToMyList(hero, username)}>Add to List</button>
             <button onClick={() => searchSuperheroOnDuckDuckGo(hero.name)}>
         Search on DuckDuckGo
       </button>

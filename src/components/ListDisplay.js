@@ -73,12 +73,9 @@ function ListDisplay({ listName }) {
     const selectedList = lists.find(list => list.listName === name);
     if (selectedList) {
       setListElements(selectedList.superheroes);
-      setSelectedList(listName);
-      
-      listName = name;
+      setSelectedList(name); // Change this line
     }
-  };
-
+};
   if (!user) {
     return <div>Please log in to view your lists.</div>;
   }
