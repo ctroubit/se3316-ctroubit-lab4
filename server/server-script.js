@@ -326,30 +326,34 @@ app.get('/api/superheroes/single/:searchBy/:value',
 });
 
 
-app.put('/api/lists/:listName'
-    ,param('listName').escape(),async (req, res) => {
+app.put('/api/lists/:username/:listName', param('username').escape(), param('listName').escape(), async (req, res) => {
     try {
-        const listName = req.params.listName;
+        const { username, listName } = req.params;
         const superhero = req.body.superhero;
 
-        const list = await superheroesDb.collection('lists').findOne({ listName });
+        const user = await userInfodb.collection('login').findOne({ username: username });
 
-        if (list) {
-            await superheroesDb.collection('lists').updateOne(
-                { listName },
-                { $push: { superheroes: superhero } }
+        if (!user) {
+            return res.status(404).json({ error: 'User not found.' });
+        }
+
+        const listExists = user.lists.some(list => list.listName === listName);
+
+        if (listExists) {
+            await userInfodb.collection('login').updateOne(
+                { username: username, "lists.listName": listName },
+                { $push: { "lists.$.superheroes": superhero } }
             );
-
             res.json({ message: `Superhero added to list '${listName}'` });
         } else {
             res.status(404).json({ error: `List '${listName}' not found.` });
-
         }
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Could not add superhero to list' });
     }
 });
+
 
 app.post('/api/lists', body('username').escape(), body('listName').escape(), async (req, res) => {
     const { username, listName, superheroes } = req.body;
@@ -398,14 +402,25 @@ app.get('/api/lists/:username', async (req, res) => {
     }
 });
 
-app.delete('/api/lists/:listName' ,param('listName').escape(), async (req, res) => {
+app.delete('/api/lists/:username/:listName', param('username').escape(), param('listName').escape(), async (req, res) => {
     try {
-        const deletedList = await superheroesDb.collection('lists').findOneAndDelete({ listName: req.params.listName });
-        if (!deletedList.value) {
-            console.log(`List '${req.params.listName}' has been deleted.`);
-        } else {
-            console.log(`List '${req.params.listName}' not found.`);
+        const { username, listName } = req.params;
+
+        const user = await userInfodb.collection('login').findOne({ username: username });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found.' });
         }
+
+        const updatedUser = await userInfodb.collection('login').updateOne(
+            { username: username },
+            { $pull: { lists: { listName: listName } } }
+        );
+
+        if (updatedUser.modifiedCount === 0) {
+            return res.status(404).json({ error: `List '${listName}' not found for user '${username}'.` });
+        }
+
+        res.json({ message: `List '${listName}' deleted successfully.` });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Could not delete list' });

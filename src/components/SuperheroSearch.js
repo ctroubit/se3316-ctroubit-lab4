@@ -42,6 +42,10 @@ function SuperheroSearch({searchParams}) {
         }
     }, [searchParams]);
 
+    function setList(selectedList){
+        setSelectedList(selectedList)
+    }
+
 
     function createSuperheroesDiv(fetchedSuperheroes) {
         return (
