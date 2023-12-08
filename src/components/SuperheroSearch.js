@@ -7,6 +7,7 @@ function SuperheroSearch({searchParams}) {
     const username = user?.username;
     const [selectedList, setSelectedList] = useState(''); 
     const [superheroes, setSuperheroes] = useState([]);
+    const [superheroPowers, setSuperheroPowers] = useState([]);
     const [hasResults, setHasResults] = useState(true);
 
     useEffect(() => {
@@ -45,7 +46,46 @@ function SuperheroSearch({searchParams}) {
     function setList(selectedList){
         setSelectedList(selectedList)
     }
+    async function fetchInfo(superhero) {
+        try {
+            const response = await fetch(`http://localhost:3000/api/superheroes/single/name/${superhero}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            console.log(data)
+    
+            let dataString = '';
+    
+            data.forEach((superheroObj, index) => {
+                
+    
+                if (superheroObj.powers) {
+                    let activePowers = [];
+                    for (let power in superheroObj.powers) {
+                        if (superheroObj.powers[power] === "True") {
+                            activePowers.push(power);
+                        }
+                    }
+                    if (activePowers.length > 0) {
+                        dataString += `\nActive Powers:\n- ${activePowers.join('\n- ')}\n`;
+                    }
+                }
+    
+                if (index < data.length - 1) {
+                    dataString += '\n---\n\n';
+                }
+            });
+    
+            alert(dataString);
+        } catch (error) {
+            console.error('Error fetching superhero info:', error);
+        }
+    }
 
+    function handleFetchInfo(superheroName) {
+        fetchInfo(superheroName);
+    }
 
     function createSuperheroesDiv(fetchedSuperheroes) {
         return (
@@ -103,6 +143,7 @@ function SuperheroSearch({searchParams}) {
             <button onClick={() => searchSuperheroOnDuckDuckGo(hero.name)}>
         Search on DuckDuckGo
       </button>
+      <button onClick={() => handleFetchInfo(hero.name)}>Show Powers</button>
           </li>
         );
       }
