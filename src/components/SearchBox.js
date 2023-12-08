@@ -14,6 +14,7 @@ function SearchBox({onSearch}) {
   const [selectedPower, setSelectedPower] = useState("");
   const [selectedRace, setSelectedRace] = useState("");
   const [selectedPublisher, setSelectedPublisher] = useState("");
+  const [showAdminDropdown, setShowAdminDropdown] = useState(false);
 
   useEffect(() => {
     fetch("http://localhost:3000/api/superheroes/info")
@@ -47,6 +48,10 @@ function SearchBox({onSearch}) {
   useEffect(() => {
     getPowers();
   }, []);
+
+  const toggleAdminDropdown = () => {
+    setShowAdminDropdown(prev => !prev);
+  };
 
   function getPowers() {
     fetch(`http://localhost:3000/api/superheroes/powers`)
@@ -191,12 +196,23 @@ function SearchBox({onSearch}) {
                 onClick={handleSearchClick}>
                 Search
               </button>
-              {user && user.isAdmin && (
-                <div>
-                  {/* Admin-only option here */}
-                  <button className="btn btn-outline-danger">Admin Option</button>
-                </div>
-              )}
+              <div>
+                {user && user.isAdmin && (
+                  <div>
+                    <button className="btn btn-outline-danger" onClick={toggleAdminDropdown}>
+                      Admin Options
+                    </button>
+                    {showAdminDropdown && (
+                      <div className="admin-dropdown">
+                        <button className="dropdown-item" onClick={fetchUsers}>
+                          Fetch Users
+                        </button>
+                        
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
               <button
                 className="btn btn-outline-success"
                 onClick={() => {

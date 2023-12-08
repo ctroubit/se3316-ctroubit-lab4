@@ -115,7 +115,7 @@ const transporter = nodemailer.createTransport({
         const hashedPassword = await bcrypt.hash(password, salt);
 
         const token = jwt.sign(
-            { userId: username, email: email},
+            { username: username, email: email},
             process.env.JWT_SECRET, 
             { expiresIn: '24h' }    
           );
@@ -442,8 +442,6 @@ app.delete('/api/lists/:username/:listName', param('username').escape(), param('
             { $pull: { lists: { listName: listName } } }
         );
 
-        
-
         res.json({ message: `List '${listName}' deleted successfully.` });
     } catch (error) {
         console.error(error);
@@ -454,12 +452,15 @@ app.delete('/api/lists/:username/:listName', param('username').escape(), param('
 const adminAuthMiddleware = async (req, res, next) => {
     try {
         const token = req.headers.authorization.split(' ')[1]; 
+        console.log(token)
         if (!token) {
             return res.status(401).send('No token provided');
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const adminUser = await userInfodb.collection('login').findOne({ _id: decoded.userId });
+        console.log(decoded.email)
+        const adminUser = await userInfodb.collection('login').findOne({email: decoded.email });
+
 
         if (!adminUser || !adminUser.isAdmin) {
             return res.status(403).send('Access denied');
