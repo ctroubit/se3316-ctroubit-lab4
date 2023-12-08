@@ -30,5 +30,8 @@
 
 .main {
   grid-area: main;
+  justify-content: center;
+  align-items: center;
+
   
 }

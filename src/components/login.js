@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState,useContext } from "react";
 import './login.css';
-import { useUser } from './UserContext'; 
+import { UserContext } from './UserContext';
 
 
 function Login({ close }) {
@@ -8,7 +8,8 @@ function Login({ close }) {
   const [userData, setUserData] = useState({ username: '', email: '', password: ''});
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
-  const { setUser } = useUser();
+  const { user, setUser } = useContext(UserContext);
+  const [isBlurred, setIsBlurred] = useState(false);
 
   const handleChange = (e) => {
     setUserData({ ...userData, [e.target.name]: e.target.value });
@@ -31,7 +32,7 @@ function Login({ close }) {
       if (response.ok) {
         console.log('Login successful');
         alert('Login successful')
-        
+        setIsBlurred()
         setUser({ username: userData.username }); 
         
       } else {

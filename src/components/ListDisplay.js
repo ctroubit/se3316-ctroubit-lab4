@@ -7,12 +7,10 @@ import SuperheroSearch from './SuperheroSearch';
 function ListDisplay({ listName }) {
   const [lists, setLists] = useState([]);
   const [listElements, setListElements] = useState([]);
-  const [selectedList, setSelectedList] = useState('');
   const [error, setError] = useState('');
   const [newListName, setNewListName] = useState('');
-  const { user } = useContext(UserContext);
   const [searchResults, setSearchResults] = useState([]);
-  
+  const { user, selectedList, setSelectedList } = useContext(UserContext);
 
   useEffect(() => {
     const fetchLists = async () => {
@@ -73,7 +71,7 @@ function ListDisplay({ listName }) {
     const selectedList = lists.find(list => list.listName === name);
     if (selectedList) {
       setListElements(selectedList.superheroes);
-      setSelectedList(name); // Change this line
+      setSelectedList(name); 
     }
 };
   if (!user) {
@@ -83,6 +81,32 @@ function ListDisplay({ listName }) {
   if (error) {
       return <div>Error: {error}</div>;
   }
+
+  const handleDeleteList = async () => {
+    const listDelete = window.prompt('Enter the name of the list to be deleted:')
+    try {
+      
+      const response = await fetch(`http://localhost:3000/api/lists/${user.username}/${listDelete}`, {
+        method: 'DELETE',
+      });
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+  
+     
+      const updatedLists = lists.filter(list => list.listName !== listDelete);
+      setLists(updatedLists);
+  
+     
+      if (selectedList === listDelete) {
+        setSelectedList('');
+        setListElements([]);
+      }
+    } catch (error) {
+      console.error('Error deleting list:', error);
+    }
+  };
 
   
 
@@ -108,15 +132,25 @@ function ListDisplay({ listName }) {
           />
           <button type="submit">Create List</button>
         </form>
+        <button 
+      onClick={() => handleDeleteList()}
+      className="deleteListButton"
+    >
+      Delete
+    </button>
       </div>
       <div id='superheroesContainer'>
-        <h2>{selectedList && `${selectedList}`}</h2>
-        {listElements.map((element, index) => (
+      <h2>{selectedList || 'Select a List'}</h2>
+      {listElements.length > 0 ? (
+        listElements.map((element, index) => (
           <div key={index} className="superheroItem">
             <p>{element.name}</p>
           </div>
-        ))}
-      </div>
+        ))
+      ) : (
+        <p>No superheroes in this list.</p>
+      )}
+    </div>
       {searchResults && <SuperheroSearch superheroes={searchResults} />}
     </div>
   );

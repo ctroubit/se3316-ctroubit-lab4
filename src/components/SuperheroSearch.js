@@ -3,9 +3,8 @@ import './SuperheroSearch.css'
 import { UserContext } from './UserContext';
 
 function SuperheroSearch({searchParams}) {
-    const { user } = useContext(UserContext);
+    const { user, selectedList ,setSelectedList} = useContext(UserContext);
     const username = user?.username;
-    const [selectedList, setSelectedList] = useState(''); 
     const [superheroes, setSuperheroes] = useState([]);
     const [superheroPowers, setSuperheroPowers] = useState([]);
     const [hasResults, setHasResults] = useState(true);
@@ -125,6 +124,8 @@ function SuperheroSearch({searchParams}) {
             console.error('Error:', error);
         });
     }
+
+    
     
     function createSuperheroListItem(hero) {
         return (

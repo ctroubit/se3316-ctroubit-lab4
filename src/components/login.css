@@ -36,3 +36,6 @@
     width: 100%; 
     text-align: left; 
 }
+.blur-effect {
+    filter: blur(5px);
+  }

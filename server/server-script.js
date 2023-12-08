@@ -416,9 +416,7 @@ app.delete('/api/lists/:username/:listName', param('username').escape(), param('
             { $pull: { lists: { listName: listName } } }
         );
 
-        if (updatedUser.modifiedCount === 0) {
-            return res.status(404).json({ error: `List '${listName}' not found for user '${username}'.` });
-        }
+        
 
         res.json({ message: `List '${listName}' deleted successfully.` });
     } catch (error) {

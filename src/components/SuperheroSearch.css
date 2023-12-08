@@ -5,7 +5,8 @@
     list-style-type: none;
     padding: 0;
     width: 100%;
-    margin-top: 20px;
+    justify-content: center;
+    align-items: center;
   }
   
   .superheroList li {
