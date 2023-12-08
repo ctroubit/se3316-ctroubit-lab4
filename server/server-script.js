@@ -23,7 +23,9 @@ const userSchema = new mongoose.Schema({
         listName: String,
         superheroes: Array
     }],
-    isAdmin: {type:Boolean, required:true}
+    isEmailVerified:{type:Boolean},
+    isActivated:{type:Boolean},
+    isAdmin: {type:Boolean}
 });
 
 const User = mongoose.model('User', userSchema);
@@ -85,7 +87,7 @@ const transporter = nodemailer.createTransport({
 
   app.post('/api/register', async (req, res) => {
     try {
-        const { username, email, password,lists} = req.body;
+        const { username, email, password} = req.body;
         
 
         if (!username || !email || !password) {
@@ -96,7 +98,6 @@ const transporter = nodemailer.createTransport({
             return res.status(500).send('Database connection not established');
         }
 
-        
         const existingUser = await userInfodb.collection('login').findOne({ email: email });
         if (existingUser) {
         return res.status(409).send('User already exists');
@@ -106,37 +107,20 @@ const transporter = nodemailer.createTransport({
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        const newUser = new User({ username, email, password: hashedPassword, lists });
-        console.log(newUser)
+        const newUser = new User({ 
+            username, 
+            email, 
+            password: hashedPassword, 
+            lists:[],
+            isEmailVerified:false,
+            isActivated: true, 
+            isAdmin: false 
+        });
   
-        
         await userInfodb.collection('login').insertOne(newUser);
-  
-      
-      nev.createTempUser(newUser, function(err, existingPersistentUser, newTempUser) {
-        if (err) {
-          console.error('Error creating temp user:', err);
-          return res.status(500).send('Internal Server Error 1 ');
-        }
-  
-        if (existingPersistentUser) {
-          return res.status(409).send('User already exists');
-        }
-  
-        if (newTempUser) {
-          var URL = newTempUser[nev.options.URLFieldName];
-          nev.sendVerificationEmail(email, URL, function(err, info) {
-            if (err) {
-              console.error('Error sending verification email:', err);
-              return res.status(500).send('Could not send verification email');
-            }
-            res.status(201).send('An email has been sent to you. Please check it to verify your account.');
-          });
 
-        } else {
-          return res.status(200).send('An email has already been sent to this email.');
-        }
-      });
+        res.status(201).send('Account creation successful!');
+
     } catch (error) {
       console.error('Error in /api/register:', error);
       res.status(500).send('Internal Server Error 2');
@@ -372,7 +356,7 @@ app.post('/api/lists', body('username').escape(), body('listName').escape(), asy
 
     try {
         
-        const user = await userInfodb.collection('users').findOne({ username: username });
+        const user = await userInfodb.collection('login').findOne({ username: username });
         if (!user) {
             return res.status(404).json({ error: 'User not found.' });
         }
@@ -384,7 +368,7 @@ app.post('/api/lists', body('username').escape(), body('listName').escape(), asy
         }
 
         
-        await userInfodb.collection('users').updateOne(
+        await userInfodb.collection('login').updateOne(
             { username: username },
             { $push: { lists: { listName, superheroes } } }
         );

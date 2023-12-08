@@ -5,7 +5,7 @@ import { useUser } from './UserContext';
 
 function Login({ close }) {
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
-  const [userData, setUserData] = useState({ username: '', email: '', password: '' ,lists:'',isAdmin:false});
+  const [userData, setUserData] = useState({ username: '', email: '', password: ''});
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const { setUser } = useUser();
@@ -57,7 +57,11 @@ function Login({ close }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(userData),
+        body: JSON.stringify({
+          username: userData.username,
+          email: userData.email,
+          password: userData.password
+        }),
 
       });
 

@@ -34,6 +34,8 @@ function ListDisplay({ listName }) {
 
   const handleCreateList = async (e) => {
     e.preventDefault();
+    if (!newListName.trim()) return; 
+  
     try {
       const response = await fetch('http://localhost:3000/api/lists', {
         method: 'POST',
@@ -41,17 +43,19 @@ function ListDisplay({ listName }) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username: 'username', 
+          username: user.username, 
           listName: newListName,
           superheroes: [] 
         }),
       });
-
+  
       if (response.ok) {
-        setLists([...lists, { listName: newListName, superheroes: [] }]);
+        const newList = { listName: newListName, superheroes: [] };
+        setLists([...lists, newList]);
         setNewListName('');
       } else {
         console.error('Failed to create the list');
+        
       }
     } catch (error) {
       console.error('Error:', error);
@@ -83,9 +87,7 @@ function ListDisplay({ listName }) {
       return <div>Error: {error}</div>;
   }
 
-  if (lists.length === 0) {
-      return <div>Loading lists or no lists available...</div>;
-  }
+  
 
   return (
     <div>
